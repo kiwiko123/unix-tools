@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# LINUM(1)
+# 
+# linum <line number> <file>
+# 
+# Prints the line at <line number> to stdout.
+
+function error
+{
+	echo "${0}: ${1}"
+	exit -1
+}
+
+if [[ "$#" -ne 2 ]]
+then
+	error "expected 2 arguments (line, file)"
+fi
+
+if [[ ! -f $2 ]]
+then
+	error "${2} is not a file"
+fi
+
+printf "${1}: "
+sed "${1}q;d" "$2"
