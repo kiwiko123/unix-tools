@@ -12,7 +12,6 @@
 	#define max(a,b) (((a) >= (b)) ? (a) : (b))
 #endif
 
-
 const char _PROGRAM[] = "descend";
 
 
