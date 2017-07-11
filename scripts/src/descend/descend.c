@@ -46,7 +46,6 @@ void descend_from(const char* path, int depth)
 	while ((entry = readdir(dir)) && depth != 0)
 	{
 		// if name != '.' or name != '..':
-		// if not (name == '.' or name == '..')
 		if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, ".."))
 		{
 			continue;
@@ -60,6 +59,7 @@ void descend_from(const char* path, int depth)
 		{
 			strncpy(buf, entry->d_name, max(1024, strlen(entry->d_name)));
 		}
+
 		printf("%s", buf);
 		if (is_dir(buf))
 		{

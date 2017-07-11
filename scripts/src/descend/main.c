@@ -25,6 +25,5 @@ int main(int argc, char** argv)
 	}
 
 	descend_from(index >= argc ? "." : argv[index], depth);
-	
 	return 0;
 }
