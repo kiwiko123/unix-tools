@@ -1,0 +1,79 @@
+#!/bin/bash
+
+# ----------------------------------
+# DESCEND(1)
+#
+# USAGE:
+# 	descend [options] [root]
+# 
+# DESCRIPTION
+# 	Recursively descends directories starting from root.
+#   Provide option -d <depth> to descend up to <depth> levels only.
+# ----------------------------------
+
+function error
+{
+	echo "${0}: ${1}"
+	exit -1
+}
+
+DIR=""
+DEPTH=-1
+
+# -d, --depth
+while getopts ":d:" opt
+do
+	case $opt in
+		d)
+			DEPTH=$OPTARG					
+			;;
+		\?)
+			error "invalid option"
+			;;
+	esac
+done
+
+# directory argument
+for arg in "$@"
+do
+	if [[ -d $arg ]]
+	then
+		DIR=$arg
+		break
+	fi	
+done
+if [[ $DIR == "" ]]
+then
+	DIR="."
+fi
+
+
+# body
+for subdir in $(ls ${DIR})
+do
+	if [[ $DEPTH -eq 0 ]]
+	then
+		break
+	fi
+
+	if [[ $DIR == "." ]]
+	then
+		fullpath=$subdir
+	else
+		fullpath="${DIR}/${subdir}"
+	fi
+
+	if [[ -d $fullpath ]]
+	then
+		echo "${fullpath}/"
+		TEMPDEPTH=$((DEPTH-1))
+		descend -d $TEMPDEPTH $fullpath
+	else
+		if [[ $DIR == "." ]]
+		then
+			echo $subdir
+		else
+			echo $fullpath
+		fi
+	fi
+done
