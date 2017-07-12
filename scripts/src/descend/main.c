@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -8,22 +9,23 @@ int main(int argc, char** argv)
 {
 	int opt;
 	int depth = -1;
-	unsigned int index = 1;
+	bool show_hidden = false;
 
-	while ((opt = getopt(argc, argv, ":d:")) != -1)
+	while ((opt = getopt(argc, argv, "d:h")) != -1)
 	{
 		switch (opt)
 		{
 			case 'd':
 				depth = atoi(optarg);
-				++index;
+				break;
+			case 'h':
+				show_hidden = true;
 				break;
 			default:
 				fatal("invalid option");
 		}
-		++index;
 	}
 
-	descend_from(index >= argc ? "." : argv[index], depth);
+	descend_from(optind >= argc ? "." : argv[optind], depth, show_hidden);
 	return 0;
 }
