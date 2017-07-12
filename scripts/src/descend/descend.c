@@ -8,10 +8,6 @@
 #include <sys/types.h>
 #include "descend.h"
 
-#ifndef max
-	#define max(a,b) (((a) >= (b)) ? (a) : (b))
-#endif
-
 const char _PROGRAM[] = "descend";
 
 
@@ -33,7 +29,7 @@ bool is_dir(const char* path)
 	return S_ISDIR(st.st_mode);
 }
 
-void descend_from(const char* path, int depth)
+void descend_from(const char* path, int depth, bool show_hidden)
 {
 	DIR* dir = opendir(path);
 	if (!dir)
@@ -44,8 +40,10 @@ void descend_from(const char* path, int depth)
 	struct dirent* entry;
 	while ((entry = readdir(dir)) && depth != 0)
 	{
-		// if name != '.' or name != '..':
-		if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, ".."))
+		// if name != '.' or name != '..' \
+		//   or \
+		// not show_hidden and name.startswith('.')
+		if ((!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) || (!show_hidden && entry->d_name[0] == '.'))
 		{
 			continue;
 		}
@@ -56,14 +54,14 @@ void descend_from(const char* path, int depth)
 		}
 		else
 		{
-			strncpy(buf, entry->d_name, max(1024, strlen(entry->d_name)));
+			snprintf(buf, 1024, "%s", entry->d_name);
 		}
 
 		printf("%s", buf);
 		if (is_dir(buf))
 		{
 			printf("/\n");
-			descend_from(buf, depth - 1);
+			descend_from(buf, depth - 1, show_hidden);
 		}
 		else
 		{
