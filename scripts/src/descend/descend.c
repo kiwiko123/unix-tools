@@ -8,33 +8,46 @@
 #include <sys/types.h>
 #include "descend.h"
 
+#define _ERRBUFSIZ 512
 const char _PROGRAM[] = "descend";
 
 
 void fatal(const char* message)
 {
-	char buf[512];
-	snprintf(buf, 512, "%s: %s\n", _PROGRAM, message);
+	char buf[_ERRBUFSIZ];
+	snprintf(buf, _ERRBUFSIZ, "%s: %s\n  ", _PROGRAM, message);
 	perror(buf);
 	exit(-1);
 }
 
-bool is_dir(const char* path)
+bool is_dir(const char* path, bool persist)
 {
 	struct stat st;
 	if (stat(path, &st) == -1)
 	{
-		fatal("failed to stat path");
+		if (persist)
+		{
+			return false;
+		}
+		char errbuf[_ERRBUFSIZ];
+		snprintf(errbuf, _ERRBUFSIZ, "failed to stat path: \"%s\"", path);
+		fatal(errbuf);
 	}
 	return S_ISDIR(st.st_mode);
 }
 
-void descend_from(const char* path, int depth, bool show_hidden)
+void descend_from(const char* path, int depth, bool persist, bool show_hidden)
 {
 	DIR* dir = opendir(path);
 	if (!dir)
 	{
-		fatal("failed to open directory");
+		if (persist)
+		{
+			return;
+		}
+		char errbuf[_ERRBUFSIZ];
+		snprintf(errbuf, _ERRBUFSIZ, "failed to open directory: \"%s\"", path);
+		fatal(errbuf);
 	}
 
 	struct dirent* entry;
@@ -58,10 +71,10 @@ void descend_from(const char* path, int depth, bool show_hidden)
 		}
 
 		printf("%s", buf);
-		if (is_dir(buf))
+		if (is_dir(buf, persist))
 		{
 			printf("/\n");
-			descend_from(buf, depth - 1, show_hidden);
+			descend_from(buf, depth - 1, persist, show_hidden);
 		}
 		else
 		{
