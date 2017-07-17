@@ -9,26 +9,25 @@
 #include "descend.h"
 
 #define _ERRBUFSIZ 512
-const char _PROGRAM[] = "descend";
-
+static const char* _PROGRAM = "descend";
+static bool _PERSIST = false;
 
 void fatal(const char* message)
 {
-	char buf[_ERRBUFSIZ];
-	snprintf(buf, _ERRBUFSIZ, "%s: %s\n  ", _PROGRAM, message);
-	perror(buf);
-	exit(-1);
+	if (!_PERSIST)
+	{
+		char buf[_ERRBUFSIZ];
+		snprintf(buf, _ERRBUFSIZ, "%s: %s\n  ", _PROGRAM, message);
+		perror(buf);
+		exit(-1);
+	}
 }
 
-bool is_dir(const char* path, bool persist)
+bool is_dir(const char* path)
 {
 	struct stat st;
 	if (stat(path, &st) == -1)
 	{
-		if (persist)
-		{
-			return false;
-		}
 		char errbuf[_ERRBUFSIZ];
 		snprintf(errbuf, _ERRBUFSIZ, "failed to stat path: \"%s\"", path);
 		fatal(errbuf);
@@ -38,10 +37,11 @@ bool is_dir(const char* path, bool persist)
 
 void descend_from(const char* path, int depth, bool persist, bool show_hidden)
 {
+	_PERSIST = persist;
 	DIR* dir = opendir(path);
 	if (!dir)
 	{
-		if (persist)
+		if (_PERSIST)
 		{
 			return;
 		}
@@ -60,6 +60,11 @@ void descend_from(const char* path, int depth, bool persist, bool show_hidden)
 		{
 			continue;
 		}
+
+		// if path == '.':
+		//   print full/relative/path/to/entry
+		// else:
+		//   print entry
 		char buf[1024];
 		if (strcmp(path, "."))
 		{
@@ -71,7 +76,7 @@ void descend_from(const char* path, int depth, bool persist, bool show_hidden)
 		}
 
 		printf("%s", buf);
-		if (is_dir(buf, persist))
+		if (is_dir(buf))
 		{
 			printf("/\n");
 			descend_from(buf, depth - 1, persist, show_hidden);
@@ -83,6 +88,9 @@ void descend_from(const char* path, int depth, bool persist, bool show_hidden)
 	}
 	if (closedir(dir) == -1)
 	{
-		fatal("failed to close directory");
+		char errbuf[_ERRBUFSIZ];
+		snprintf(errbuf, _ERRBUFSIZ, "failed to close directory: \"%s\"", path);
+		_PERSIST = true;	// let fatal() kill program if unmanaged resources exist
+		fatal(errbuf);
 	}
 }
